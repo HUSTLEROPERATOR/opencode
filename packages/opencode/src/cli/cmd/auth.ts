@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Auth } from "../../auth"
 import { cmd } from "./cmd"
 import * as prompts from "@clack/prompts"

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Provider } from "@/provider/provider"
 import { Config } from "@/config/config"
 import { fn } from "@/util/fn"

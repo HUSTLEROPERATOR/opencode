@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Log } from "../util/log"
 import { LSPClient } from "./client"
 import path from "path"

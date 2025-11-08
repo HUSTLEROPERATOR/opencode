@@ -14,8 +14,8 @@
     "drizzle-orm": "0.41.0",
     "postgres": "3.4.7",
     "stripe": "18.0.0",
-    "ulid": "catalog:",
-    "zod": "catalog:"
+    "ulid": "*",
+    "zod": "*"
   },
   "exports": {
     "./*": "./src/*"
@@ -34,13 +34,13 @@
     "typecheck": "tsgo --noEmit"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "catalog:",
+    "@cloudflare/workers-types": "*",
     "@tsconfig/node22": "22.0.2",
     "@types/bun": "1.3.0",
-    "@types/node": "catalog:",
+    "@types/node": "*",
     "drizzle-kit": "0.30.5",
     "mysql2": "3.14.4",
-    "typescript": "catalog:",
-    "@typescript/native-preview": "catalog:"
+    "typescript": "*",
+    "@typescript/native-preview": "*"
   }
 }

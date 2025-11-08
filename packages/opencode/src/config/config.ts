@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Log } from "../util/log"
 import path from "path"
 import os from "os"

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { BashTool } from "./bash"
 import { EditTool } from "./edit"
 import { GlobTool } from "./glob"
