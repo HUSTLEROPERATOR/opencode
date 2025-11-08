@@ -4,6 +4,10 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { tmpdir } from "os"
 
+function normalizePath(p: string) {
+  return p.replace(/\\/g, "/")
+}
+
 describe("Patch namespace", () => {
   let tempDir: string
 
@@ -136,7 +140,7 @@ PATCH`
   describe("applyPatch", () => {
     test("should add a new file", async () => {
       const patchText = `*** Begin Patch
-*** Add File: ${tempDir}/new-file.txt
+*** Add File: ${normalizePath(tempDir)}/new-file.txt
 +Hello World
 +This is a new file
 *** End Patch`
@@ -155,17 +159,14 @@ PATCH`
       await fs.writeFile(filePath, "This file will be deleted")
 
       const patchText = `*** Begin Patch
-*** Delete File: ${filePath}
+*** Delete File: ${normalizePath(filePath)}
 *** End Patch`
 
       const result = await Patch.applyPatch(patchText)
       expect(result.deleted).toHaveLength(1)
-      expect(result.deleted[0]).toBe(filePath)
+      expect(normalizePath(result.deleted[0])).toBe(normalizePath(filePath))
 
-      const exists = await fs
-        .access(filePath)
-        .then(() => true)
-        .catch(() => false)
+      const exists = await fs.access(filePath).then(() => true).catch(() => false)
       expect(exists).toBe(false)
     })
 
@@ -174,7 +175,7 @@ PATCH`
       await fs.writeFile(filePath, "line 1\nline 2\nline 3\n")
 
       const patchText = `*** Begin Patch
-*** Update File: ${filePath}
+*** Update File: ${normalizePath(filePath)}
 @@
  line 1
 -line 2
@@ -184,7 +185,7 @@ PATCH`
 
       const result = await Patch.applyPatch(patchText)
       expect(result.modified).toHaveLength(1)
-      expect(result.modified[0]).toBe(filePath)
+      expect(normalizePath(result.modified[0])).toBe(normalizePath(filePath))
 
       const content = await fs.readFile(filePath, "utf-8")
       expect(content).toBe("line 1\nline 2 updated\nline 3\n")
@@ -196,8 +197,8 @@ PATCH`
       await fs.writeFile(oldPath, "old content\n")
 
       const patchText = `*** Begin Patch
-*** Update File: ${oldPath}
-*** Move to: ${newPath}
+*** Update File: ${normalizePath(oldPath)}
+*** Move to: ${normalizePath(newPath)}
 @@
 -old content
 +new content
@@ -205,12 +206,9 @@ PATCH`
 
       const result = await Patch.applyPatch(patchText)
       expect(result.modified).toHaveLength(1)
-      expect(result.modified[0]).toBe(newPath)
+      expect(normalizePath(result.modified[0])).toBe(normalizePath(newPath))
 
-      const oldExists = await fs
-        .access(oldPath)
-        .then(() => true)
-        .catch(() => false)
+      const oldExists = await fs.access(oldPath).then(() => true).catch(() => false)
       expect(oldExists).toBe(false)
 
       const newContent = await fs.readFile(newPath, "utf-8")
@@ -226,13 +224,13 @@ PATCH`
       await fs.writeFile(file2, "content 2")
 
       const patchText = `*** Begin Patch
-*** Add File: ${file3}
+*** Add File: ${normalizePath(file3)}
 +new file content
-*** Update File: ${file1}
+*** Update File: ${normalizePath(file1)}
 @@
 -content 1
 +updated content 1
-*** Delete File: ${file2}
+*** Delete File: ${normalizePath(file2)}
 *** End Patch`
 
       const result = await Patch.applyPatch(patchText)
@@ -245,18 +243,15 @@ PATCH`
       const nestedPath = path.join(tempDir, "deep", "nested", "file.txt")
 
       const patchText = `*** Begin Patch
-*** Add File: ${nestedPath}
+*** Add File: ${normalizePath(nestedPath)}
 +Deep nested content
 *** End Patch`
 
       const result = await Patch.applyPatch(patchText)
       expect(result.added).toHaveLength(1)
-      expect(result.added[0]).toBe(nestedPath)
+      expect(normalizePath(result.added[0])).toBe(normalizePath(nestedPath))
 
-      const exists = await fs
-        .access(nestedPath)
-        .then(() => true)
-        .catch(() => false)
+      const exists = await fs.access(nestedPath).then(() => true).catch(() => false)
       expect(exists).toBe(true)
     })
   })
@@ -266,7 +261,7 @@ PATCH`
       const nonExistent = path.join(tempDir, "does-not-exist.txt")
 
       const patchText = `*** Begin Patch
-*** Update File: ${nonExistent}
+*** Update File: ${normalizePath(nonExistent)}
 @@
 -old line
 +new line
@@ -279,7 +274,7 @@ PATCH`
       const nonExistent = path.join(tempDir, "does-not-exist.txt")
 
       const patchText = `*** Begin Patch
-*** Delete File: ${nonExistent}
+*** Delete File: ${normalizePath(nonExistent)}
 *** End Patch`
 
       await expect(Patch.applyPatch(patchText)).rejects.toThrow()
@@ -292,7 +287,7 @@ PATCH`
       await fs.writeFile(emptyFile, "")
 
       const patchText = `*** Begin Patch
-*** Update File: ${emptyFile}
+*** Update File: ${normalizePath(emptyFile)}
 @@
 +First line
 *** End Patch`
@@ -309,7 +304,7 @@ PATCH`
       await fs.writeFile(filePath, "no newline")
 
       const patchText = `*** Begin Patch
-*** Update File: ${filePath}
+*** Update File: ${normalizePath(filePath)}
 @@
 -no newline
 +has newline now
@@ -327,7 +322,7 @@ PATCH`
       await fs.writeFile(filePath, "line 1\nline 2\nline 3\nline 4\n")
 
       const patchText = `*** Begin Patch
-*** Update File: ${filePath}
+*** Update File: ${normalizePath(filePath)}
 @@
  line 1
 -line 2

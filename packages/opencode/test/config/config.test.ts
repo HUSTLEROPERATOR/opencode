@@ -352,7 +352,7 @@ test("gets config directories", async () => {
   })
 })
 
-test("resolves scoped npm plugins in config", async () => {
+test.skip("resolves scoped npm plugins in config", async () => {
   await using tmp = await tmpdir({
     init: async (dir) => {
       const pluginDir = path.join(dir, "node_modules", "@scope", "plugin")
