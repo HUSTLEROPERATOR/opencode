@@ -49,6 +49,35 @@ Data ultimo aggiornamento: 2025-11-17
    - Split vendor code: `vendor-starlight`, `vendor-solid`, `vendor-other`
    - Riduzione chunk size per migliori performance
 
+### Terza fase (sera)
+✅ **Suite test completa aggiunta** (25 nuovi test, tutti passano):
+   - **test/bus/bus.test.ts** (9 test):
+     * Registrazione e pubblicazione eventi
+     * Multipli subscriber
+     * Wildcard subscription (subscribeAll)
+     * Unsubscribe corretto
+     * One-time subscription (once)
+     * Eventi con proprietà complesse
+     * Schema discriminated union
+     * Subscriber asincroni
+     * Delivery a subscriber specifici e wildcard
+   - **test/tool/registry.test.ts** (8 test):
+     * Permission handling per edit, bash, webfetch
+     * Wildcard deny con permessi nested
+     * Mixed permissions (deny + allow)
+     * Multipli permessi denied
+   - **test/session/compaction.test.ts** (8 test):
+     * isOverflow() con context limits
+     * Output token reservation
+     * Cache token handling
+     * prune() execution senza errori
+     * Protection di tool output recenti (PRUNE_PROTECT)
+     * Skip pruning con <2 user turns
+✅ **Valutazione skipLibCheck**:
+   - Testato rimozione: **68 errori** emersi (librerie esterne)
+   - Conclusione: `skipLibCheck: true` **necessario** per @opentui/solid, bun-types, @types/react
+   - Il nostro codice è già strict-compliant, solo le librerie esterne hanno problemi
+
 ## Stato attuale
 - ✅ pnpm -r run typecheck: **PASS** (zero errori, tutti i pacchetti, **con strict: true**)
 - ✅ Build web: **completata e ottimizzata** (vendor code splitting)
@@ -57,12 +86,16 @@ Data ultimo aggiornamento: 2025-11-17
 - ✅ CI/CD pipeline configurata e pronta
 - ✅ **Strict mode abilitato** in tsconfig opencode
 - ✅ ToolRegistry refactorato con migliore gestione permessi
+- ✅ **Suite test**: 25 nuovi test aggiunti (Bus, ToolRegistry, SessionCompaction)
+- ✅ **skipLibCheck**: Valutato e mantenuto (necessario per librerie esterne)
 
 ## Rischi / Debito Tecnico
-- Soppressioni globali possono nascondere bug reali.
-- skipLibCheck + strict disabilitato nel pacchetto opencode riducono qualità del tipo.
-- Strumenti MCP/LSP hanno tipi custom parziali; sarebbe meglio definire interfacce e usare discriminated unions.
-- Web build segnala chunk grandi: possibile impatto performance.
+- ~~skipLibCheck + strict disabilitato nel pacchetto opencode riducono qualità del tipo.~~ ✅ **RISOLTO**: strict abilitato, skipLibCheck necessario per librerie esterne
+- ~~Strumenti MCP/LSP hanno tipi custom parziali~~ ✅ **VERIFICATO**: già ben strutturati con discriminated unions
+- ~~Web build segnala chunk grandi~~ ✅ **RISOLTO**: Implementato vendor code splitting
+- Test mancanti per alcune aree critiche (LSP server, MCP server, alcune tool implementations)
+- Alcuni test usano `as` type assertions che potrebbero nascondere problemi di tipo
+- Nessuna validazione input per injection in tool.execute (bash commands, file paths)
 
 ## Prossime mosse (ordine suggerito)
 ~~1. Ambiente: Installare Bun su Windows ed aggiungerlo al PATH~~ ✅ **COMPLETATO**
@@ -76,13 +109,8 @@ Data ultimo aggiornamento: 2025-11-17
 ~~9. Ottimizzazione build web~~ ✅ **COMPLETATO**
 
 **Prossime priorità:**
-10. Testing:
-   - Implementare code splitting con import() dinamici per sezioni docs non critiche.
-   - Configurare `build.rollupOptions.output.manualChunks` in astro config.
-10. Testing:
-   - Aggiungere test per bus, tool registry, session compaction logic (Jest/Bun test runner).
-   - Integrare test snapshot per server routing (OpenAPI spec vs responses).
-11. Rimuovere skipLibCheck: valutare rimozione di `skipLibCheck` dal tsconfig root e opencode se non necessario.
+~~10. Testing: Aggiungere test per bus, tool registry, session compaction logic~~ ✅ **COMPLETATO**
+~~11. Rimuovere skipLibCheck~~ ✅ **VALUTATO** (necessario mantenerlo)
 12. Performance:
    - Misurare tempo di prompt pipeline (SessionPrompt.process) e valutare throttling o streaming partial flush.
    - Aggiungere metriche (counters) in Log per tool calls, retries, patch size.
@@ -94,6 +122,9 @@ Data ultimo aggiornamento: 2025-11-17
 15. Release Prep:
    - Generare CHANGELOG automatico da commit message.
    - Tag versione (semver).
+16. Test avanzati:
+   - Integrare test snapshot per server routing (OpenAPI spec vs responses).
+   - Aumentare coverage con test per LSP e MCP server.
 
 ## Comandi rapidi successivi
 - Verifica Bun: `bun --version` (dopo installazione).
@@ -116,10 +147,13 @@ Data ultimo aggiornamento: 2025-11-17
 - **Strict mode**: ✅ **Abilitato** in tsconfig opencode
 - **ToolRegistry refactoring**: 1 funzione helper aggiunta
 - **Build web**: Vendor code splitting in 3 chunk
+- **Test suite**: 25 nuovi test aggiunti (3 file test nuovi)
+- **skipLibCheck**: Valutato, necessario mantenerlo (68 errori nelle librerie esterne)
 
 ## Nota
-✅ Documento aggiornato il 2025-11-17 (2 sessioni) dopo completamento:
+✅ Documento aggiornato il 2025-11-17 (3 fasi) dopo completamento:
 - **Fase 1**: Installazione Bun, rimozione ts-nocheck, CI/CD, tipi centralizzati
 - **Fase 2**: Strict mode, ToolRegistry refactoring, ottimizzazione build web
+- **Fase 3**: Suite test completa (Bus, ToolRegistry, SessionCompaction), valutazione skipLibCheck
 
-Prossimo aggiornamento dopo implementazione punto 10-15 (testing, performance, security).
+Prossimo aggiornamento dopo implementazione punto 12-16 (performance, security, documentation).
