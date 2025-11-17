@@ -1,0 +1,7 @@
+packages:
+  - packages/*
+  - packages/console/*
+  - packages/sdk/js
+  - packages/slack
+ignoredBuiltDependencies:
+  - aws-sdk

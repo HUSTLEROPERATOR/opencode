@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Log } from "../util/log"
 import path from "path"
 import os from "os"
@@ -627,7 +626,7 @@ export namespace Config {
             return Object.entries(data).every(([id, config]) => {
               if (config.disabled) return true
               if (serverIds.has(id)) return true
-              return Boolean(config.extensions)
+              return Boolean("extensions" in config && config.extensions)
             })
           },
           {

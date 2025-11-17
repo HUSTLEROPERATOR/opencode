@@ -149,7 +149,7 @@ export namespace MCP {
       for (const { name, transport } of transports) {
         const result = await experimental_createMCPClient({
           name: "opencode",
-          transport,
+          transport: transport as any,
         })
           .then((client) => {
             log.info("connected", { key, transport: name })

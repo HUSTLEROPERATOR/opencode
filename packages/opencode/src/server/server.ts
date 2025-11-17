@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Log } from "../util/log"
 import { Bus } from "../bus"
 import { describeRoute, generateSpecs, validator, resolver, openAPIRouteHandler } from "hono-openapi"
@@ -2025,7 +2024,6 @@ export namespace Server {
         async (c) => {
           const command = c.req.valid("json").command
           await Bus.publish(TuiEvent.CommandExecute, {
-            // @ts-expect-error
             command: {
               session_new: "session.new",
               session_share: "session.share",

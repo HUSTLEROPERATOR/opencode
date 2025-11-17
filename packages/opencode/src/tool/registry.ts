@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { BashTool } from "./bash"
 import { EditTool } from "./edit"
 import { GlobTool } from "./glob"
@@ -45,7 +44,7 @@ export namespace ToolRegistry {
 
     const plugins = await Plugin.list()
     for (const plugin of plugins) {
-      for (const [id, def] of Object.entries(plugin.tool ?? {})) {
+      for (const [id, def] of Object.entries<ToolDefinition>(plugin.tool ?? {})) {
         custom.push(fromPlugin(id, def))
       }
     }

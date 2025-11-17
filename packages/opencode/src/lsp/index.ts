@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Log } from "../util/log"
 import { LSPClient } from "./client"
 import path from "path"
@@ -85,6 +84,9 @@ export namespace LSP {
           delete servers[name]
           continue
         }
+        // Type guard: item must have command after disabled check
+        if (!("command" in item)) continue
+
         servers[name] = {
           ...existing,
           id: name,

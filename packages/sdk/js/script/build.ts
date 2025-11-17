@@ -1,16 +1,21 @@
 #!/usr/bin/env bun
 
-const dir = new URL("..", import.meta.url).pathname
+import { fileURLToPath } from "url"
+const dir = fileURLToPath(new URL("..", import.meta.url))
 process.chdir(dir)
 
 import { $ } from "bun"
 import path from "path"
+import fs from "fs"
 
 import { createClient } from "@hey-api/openapi-ts"
 
 await $`bun dev generate > ${dir}/openapi.json`.cwd(path.resolve(dir, "../../opencode"))
 
-await $`rm -rf src/gen`
+// Remove src/gen directory if exists (cross-platform)
+if (fs.existsSync("src/gen")) {
+  fs.rmSync("src/gen", { recursive: true, force: true })
+}
 
 await createClient({
   input: "./openapi.json",
@@ -37,5 +42,10 @@ await createClient({
   ],
 })
 await $`bun prettier --write src/gen`
-await $`rm -rf dist`
+
+// Remove dist directory if exists (cross-platform)
+if (fs.existsSync("dist")) {
+  fs.rmSync("dist", { recursive: true, force: true })
+}
+
 await $`bun tsc`
