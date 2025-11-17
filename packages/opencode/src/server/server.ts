@@ -2023,20 +2023,25 @@ export namespace Server {
         validator("json", z.object({ command: z.string() })),
         async (c) => {
           const command = c.req.valid("json").command
+          const commandMap: Record<string, string> = {
+            session_new: "session.new",
+            session_share: "session.share",
+            session_interrupt: "session.interrupt",
+            session_compact: "session.compact",
+            messages_page_up: "session.page.up",
+            messages_page_down: "session.page.down",
+            messages_half_page_up: "session.half.page.up",
+            messages_half_page_down: "session.half.page.down",
+            messages_first: "session.first",
+            messages_last: "session.last",
+            agent_cycle: "agent.cycle",
+          }
+          const mappedCommand = commandMap[command]
+          if (!mappedCommand) {
+            return c.json({ error: "Unknown command" }, 400)
+          }
           await Bus.publish(TuiEvent.CommandExecute, {
-            command: {
-              session_new: "session.new",
-              session_share: "session.share",
-              session_interrupt: "session.interrupt",
-              session_compact: "session.compact",
-              messages_page_up: "session.page.up",
-              messages_page_down: "session.page.down",
-              messages_half_page_up: "session.half.page.up",
-              messages_half_page_down: "session.half.page.down",
-              messages_first: "session.first",
-              messages_last: "session.last",
-              agent_cycle: "agent.cycle",
-            }[command],
+            command: mappedCommand,
           })
           return c.json(true)
         },

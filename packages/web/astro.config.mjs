@@ -26,7 +26,27 @@ export default defineConfig({
   markdown: {
     rehypePlugins: [rehypeHeadingIds, [rehypeAutolinkHeadings, { behavior: "wrap" }]],
   },
-  build: {},
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Split vendor code into separate chunks
+          if (id.includes("node_modules")) {
+            // Group starlight and astro together
+            if (id.includes("@astrojs") || id.includes("starlight")) {
+              return "vendor-starlight"
+            }
+            // Group solid-js separately
+            if (id.includes("solid-js")) {
+              return "vendor-solid"
+            }
+            // Other vendor code
+            return "vendor-other"
+          }
+        },
+      },
+    },
+  },
   integrations: [
     configSchema(),
     solidJs(),

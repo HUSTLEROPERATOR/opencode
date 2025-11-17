@@ -61,7 +61,8 @@ export namespace Plugin {
     for (const hook of await state().then((x) => x.hooks)) {
       const fn = hook[name]
       if (!fn) continue
-      await fn(input, output)
+      // Type assertion needed due to generic type inference limitations
+      await (fn as (input: Input, output: Output) => void | Promise<void>)(input, output)
     }
     return output
   }

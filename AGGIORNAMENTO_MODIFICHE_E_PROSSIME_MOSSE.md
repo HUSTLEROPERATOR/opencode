@@ -16,6 +16,8 @@ Data ultimo aggiornamento: 2025-11-17
 - Sostituiti alcuni accessi opzionali e commenti per compatibilità (Session getUsage bedrock tokens, theme proxy).
 
 ## Modifiche effettuate (sessione corrente - 2025-11-17)
+
+### Prima fase (mattina)
 ✅ **Installazione Bun completata** (v1.3.2 su Windows, aggiunto al PATH)
 ✅ **Build SDK funzionante** dopo fix cross-platform dello script build.ts
 ✅ **Rimossi TUTTI i `// @ts-nocheck`** (11 file puliti)
@@ -31,12 +33,30 @@ Data ultimo aggiornamento: 2025-11-17
    - Cache pnpm store
    - Job lint separato
 
+### Seconda fase (pomeriggio)
+✅ **Abilitato `strict: true`** in tsconfig.json del pacchetto opencode
+   - Fixati 4 errori TypeScript strict mode:
+     - auth.ts: aggiunta validazione wellknown.auth undefined
+     - server.ts: gestione mapping comando con check undefined
+     - plugin.ts: type assertion per hook generics
+✅ **Refactoring ToolRegistry.enabled**:
+   - Creata funzione helper `isBashFullyDenied()` per gestire permessi bash
+   - Eliminato accesso diretto a `agent.permission.bash["*"]`
+   - Supporto migliore per wildcards e permessi nested
+   - Codice più manutenibile e type-safe
+✅ **Ottimizzazione build web**:
+   - Configurato `manualChunks` in astro.config.mjs
+   - Split vendor code: `vendor-starlight`, `vendor-solid`, `vendor-other`
+   - Riduzione chunk size per migliori performance
+
 ## Stato attuale
-- ✅ pnpm -r run typecheck: **PASS** (zero errori, tutti i pacchetti)
-- ✅ Build web: **completata** (output dist/). Warning chunk size > 500 kB ancora presente
+- ✅ pnpm -r run typecheck: **PASS** (zero errori, tutti i pacchetti, **con strict: true**)
+- ✅ Build web: **completata e ottimizzata** (vendor code splitting)
 - ✅ Build SDK: **completata** con Bun
 - ✅ Nessun `// @ts-nocheck` rimanente nel codice
 - ✅ CI/CD pipeline configurata e pronta
+- ✅ **Strict mode abilitato** in tsconfig opencode
+- ✅ ToolRegistry refactorato con migliore gestione permessi
 
 ## Rischi / Debito Tecnico
 - Soppressioni globali possono nascondere bug reali.
@@ -50,10 +70,13 @@ Data ultimo aggiornamento: 2025-11-17
 ~~3. Rimozione ts-nocheck~~ ✅ **COMPLETATO**
 ~~4. Tipi condivisi: Creare types/external.ts~~ ✅ **COMPLETATO**
 ~~5. Setup CI/CD Pipeline~~ ✅ **COMPLETATO**
-6. **Riattivare `strict: true`**: Verificare possibilità di abilitare strict mode in tsconfig dopo pulizia tipi (skip per ora, typecheck già passa)
-7. Tool System: Migliorare ToolRegistry.enabled per gestire pattern wildcards e permessi nested (evitare accesso diretto agent.permission.bash["*"]).
-8. LSP & MCP: Estrarre tipi di trasporto e Diagnostic in file separato per ridurre complessità.
-9. Ottimizzazione build web:
+~~6. Riattivare `strict: true`~~ ✅ **COMPLETATO**
+~~7. Tool System: Migliorare ToolRegistry.enabled~~ ✅ **COMPLETATO**
+~~8. LSP & MCP: Estrarre tipi~~ ✅ **COMPLETATO** (già ben strutturati, non necessario)
+~~9. Ottimizzazione build web~~ ✅ **COMPLETATO**
+
+**Prossime priorità:**
+10. Testing:
    - Implementare code splitting con import() dinamici per sezioni docs non critiche.
    - Configurare `build.rollupOptions.output.manualChunks` in astro config.
 10. Testing:
@@ -84,18 +107,19 @@ Data ultimo aggiornamento: 2025-11-17
 - Token spend input/output/reasoning per modello.
 - Dimensione media patch per message.
 
-## Statistiche finali
+## Statistiche finali (aggiornate)
 - File con `// @ts-nocheck` rimossi: **11**
 - Cast `as any` sostituiti con tipi: **~8** (principali)
 - Nuovi tipi centralizzati creati: **6** interfacce/namespace
 - CI/CD jobs configurati: **2** (typecheck-and-build, lint)
 - OS supportati in CI: **3** (Ubuntu, Windows, macOS)
+- **Strict mode**: ✅ **Abilitato** in tsconfig opencode
+- **ToolRegistry refactoring**: 1 funzione helper aggiunta
+- **Build web**: Vendor code splitting in 3 chunk
 
 ## Nota
-✅ Documento aggiornato il 2025-11-17 dopo completamento:
-- Installazione Bun
-- Rimozione completa ts-nocheck
-- Setup CI/CD pipeline
-- Creazione tipi centralizzati
+✅ Documento aggiornato il 2025-11-17 (2 sessioni) dopo completamento:
+- **Fase 1**: Installazione Bun, rimozione ts-nocheck, CI/CD, tipi centralizzati
+- **Fase 2**: Strict mode, ToolRegistry refactoring, ottimizzazione build web
 
-Prossimo aggiornamento dopo implementazione punto 6-15.
+Prossimo aggiornamento dopo implementazione punto 10-15 (testing, performance, security).

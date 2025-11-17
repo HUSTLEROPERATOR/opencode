@@ -84,6 +84,11 @@ export const AuthLoginCommand = cmd({
           const wellknown = (await fetch(`${args.url}/.well-known/opencode`).then((x) =>
             x.json(),
           )) as WellKnownOpenCodeConfig
+          if (!wellknown.auth) {
+            prompts.log.error("No auth configuration found in wellknown endpoint")
+            prompts.outro("Done")
+            return
+          }
           prompts.log.info(`Running \`${wellknown.auth.command.join(" ")}\``)
           const proc = Bun.spawn({
             cmd: wellknown.auth.command,

@@ -4,7 +4,9 @@
       "Bash(pnpm -r run typecheck:*)",
       "Bash(export PATH=\"/c/Users/risto/.bun/bin:$PATH\")",
       "Bash(bun run:*)",
-      "Bash(pnpm --filter opencode run typecheck:*)"
+      "Bash(pnpm --filter opencode run typecheck:*)",
+      "Bash(pnpm --filter @opencode-ai/web run build:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
