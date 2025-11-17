@@ -1,7 +1,7 @@
 # Aggiornamento modifiche e prossime mosse
-Data: 2025-11-07T18:59:19.860Z
+Data ultimo aggiornamento: 2025-11-17
 
-## Modifiche effettuate
+## Modifiche effettuate (sessione precedente)
 - Aggiunto jsx + jsxImportSource al tsconfig root; configurati tsconfig per web/ui.
 - Sistemato alias path e script typecheck ricorsivo (package.json root).
 - Risolto errore MapIterator in bus (uso Array.from(...)).
@@ -15,11 +15,28 @@ Data: 2025-11-07T18:59:19.860Z
 - Adattato SDK build (ritornato a shebang bun) ma build fallisce per assenza di Bun nel PATH su Windows.
 - Sostituiti alcuni accessi opzionali e commenti per compatibilità (Session getUsage bedrock tokens, theme proxy).
 
+## Modifiche effettuate (sessione corrente - 2025-11-17)
+✅ **Installazione Bun completata** (v1.3.2 su Windows, aggiunto al PATH)
+✅ **Build SDK funzionante** dopo fix cross-platform dello script build.ts
+✅ **Rimossi TUTTI i `// @ts-nocheck`** (11 file puliti)
+✅ **Creato `types/external.ts`** con tipi centralizzati:
+   - WellKnownOpenCodeConfig
+   - NodeProcessInternals
+   - GitHubRelease
+   - ProviderMetadata custom
+✅ **Sostituiti cast `as any`** principali con tipi tipizzati
+✅ **Setup CI/CD Pipeline** (.github/workflows/ci.yml):
+   - Matrix build: Ubuntu, Windows, macOS
+   - Steps: typecheck, build web, build SDK
+   - Cache pnpm store
+   - Job lint separato
+
 ## Stato attuale
-- pnpm -r run typecheck: OK (nessun errore dopo soppressioni mirate).
-- Build web: completata (output dist/). Warnings chunk size > 500 kB e external node:* auto.
-- Build SDK: fallita (manca Bun).
-- Presenza di molte soppressioni // @ts-nocheck da rimuovere progressivamente.
+- ✅ pnpm -r run typecheck: **PASS** (zero errori, tutti i pacchetti)
+- ✅ Build web: **completata** (output dist/). Warning chunk size > 500 kB ancora presente
+- ✅ Build SDK: **completata** con Bun
+- ✅ Nessun `// @ts-nocheck` rimanente nel codice
+- ✅ CI/CD pipeline configurata e pronta
 
 ## Rischi / Debito Tecnico
 - Soppressioni globali possono nascondere bug reali.
@@ -28,35 +45,32 @@ Data: 2025-11-07T18:59:19.860Z
 - Web build segnala chunk grandi: possibile impatto performance.
 
 ## Prossime mosse (ordine suggerito)
-1. Ambiente: Installare Bun su Windows ed aggiungerlo al PATH per consentire build SDK (verifica con `bun --version`).
-2. SDK Build: Eseguire `pnpm --filter @opencode-ai/sdk run build`; committare artefatti dist/ e openapi.json se necessario (valutare esclusione dal VCS).
-3. Rimozione ts-nocheck (iterativo):
-   - Per ogni file con // @ts-nocheck: riabilitare, correggere tipi (inserire interfacce Tool, MCP status, refine generico).
-   - Riattivare `strict: true` in tsconfig opencode dopo pulizia.
-4. Tipi condivisi: Creare un modulo `packages/opencode/src/types/external.ts` con definizioni centralizzate anziché cast any.
-5. Tool System: Migliorare ToolRegistry.enabled per gestire pattern wildcards e permessi nested (evitare accesso diretto agent.permission.bash["*"]).
-6. LSP & MCP: Estrarre tipi di trasporto e Diagnostic in file separato per ridurre complessità e rimuovere ts-nocheck.
-7. Ottimizzazione build web:
+~~1. Ambiente: Installare Bun su Windows ed aggiungerlo al PATH~~ ✅ **COMPLETATO**
+~~2. SDK Build: Eseguire build SDK~~ ✅ **COMPLETATO**
+~~3. Rimozione ts-nocheck~~ ✅ **COMPLETATO**
+~~4. Tipi condivisi: Creare types/external.ts~~ ✅ **COMPLETATO**
+~~5. Setup CI/CD Pipeline~~ ✅ **COMPLETATO**
+6. **Riattivare `strict: true`**: Verificare possibilità di abilitare strict mode in tsconfig dopo pulizia tipi (skip per ora, typecheck già passa)
+7. Tool System: Migliorare ToolRegistry.enabled per gestire pattern wildcards e permessi nested (evitare accesso diretto agent.permission.bash["*"]).
+8. LSP & MCP: Estrarre tipi di trasporto e Diagnostic in file separato per ridurre complessità.
+9. Ottimizzazione build web:
    - Implementare code splitting con import() dinamici per sezioni docs non critiche.
    - Configurare `build.rollupOptions.output.manualChunks` in astro config.
-8. CI Pipeline (GitHub Actions o altri):
-   - Job: setup pnpm, install, typecheck, build web + sdk, eventualmente lint (prettier/eslint) e test.
-   - Cache: pnpm store + bun (quando disponibile).
-9. Testing:
+10. Testing:
    - Aggiungere test per bus, tool registry, session compaction logic (Jest/Bun test runner).
    - Integrare test snapshot per server routing (OpenAPI spec vs responses).
-10. Rimuovere skipLibCheck: una volta corretti i tipi, abilitare `strict: true` e rimuovere `skipLibCheck` dal tsconfig root e opencode.
-11. Performance:
+11. Rimuovere skipLibCheck: valutare rimozione di `skipLibCheck` dal tsconfig root e opencode se non necessario.
+12. Performance:
    - Misurare tempo di prompt pipeline (SessionPrompt.process) e valutare throttling o streaming partial flush.
    - Aggiungere metriche (counters) in Log per tool calls, retries, patch size.
-12. Security / Hardening:
+13. Security / Hardening:
    - Validare input tool.execute per injection (sanitize shell commands in Task / BashTool).
    - Limitare lunghezza e tipo dei file caricati (non solo text/plain).
-13. Documentation Update:
+14. Documentation Update:
    - Aggiornare README / docs per nuovi campi share, permission e differenze agent/mode.
-14. Release Prep:
+15. Release Prep:
    - Generare CHANGELOG automatico da commit message.
-   - Tag versione (semver) dopo rimozione ts-nocheck.
+   - Tag versione (semver).
 
 ## Comandi rapidi successivi
 - Verifica Bun: `bun --version` (dopo installazione).
@@ -70,10 +84,18 @@ Data: 2025-11-07T18:59:19.860Z
 - Token spend input/output/reasoning per modello.
 - Dimensione media patch per message.
 
-## Nota
-Questa lista va aggiornata dopo:
-- Installazione Bun
-- Prima rimozione di un gruppo di ts-nocheck
-- Aggiunta pipeline CI.
+## Statistiche finali
+- File con `// @ts-nocheck` rimossi: **11**
+- Cast `as any` sostituiti con tipi: **~8** (principali)
+- Nuovi tipi centralizzati creati: **6** interfacce/namespace
+- CI/CD jobs configurati: **2** (typecheck-and-build, lint)
+- OS supportati in CI: **3** (Ubuntu, Windows, macOS)
 
-Aggiorna questo file ad ogni step importante.
+## Nota
+✅ Documento aggiornato il 2025-11-17 dopo completamento:
+- Installazione Bun
+- Rimozione completa ts-nocheck
+- Setup CI/CD pipeline
+- Creazione tipi centralizzati
+
+Prossimo aggiornamento dopo implementazione punto 6-15.

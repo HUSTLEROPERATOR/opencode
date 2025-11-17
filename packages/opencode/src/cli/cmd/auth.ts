@@ -9,6 +9,7 @@ import os from "os"
 import { Global } from "../../global"
 import { Plugin } from "../../plugin"
 import { Instance } from "../../project/instance"
+import type { WellKnownOpenCodeConfig } from "../../types/external"
 
 export const AuthCommand = cmd({
   command: "auth",
@@ -80,7 +81,9 @@ export const AuthLoginCommand = cmd({
         UI.empty()
         prompts.intro("Add credential")
         if (args.url) {
-          const wellknown = await fetch(`${args.url}/.well-known/opencode`).then((x) => x.json() as any)
+          const wellknown = (await fetch(`${args.url}/.well-known/opencode`).then((x) =>
+            x.json(),
+          )) as WellKnownOpenCodeConfig
           prompts.log.info(`Running \`${wellknown.auth.command.join(" ")}\``)
           const proc = Bun.spawn({
             cmd: wellknown.auth.command,
@@ -95,7 +98,7 @@ export const AuthLoginCommand = cmd({
           const token = await new Response(proc.stdout).text()
           await Auth.set(args.url, {
             type: "wellknown",
-            key: wellknown.auth.env,
+            key: wellknown.auth?.env as string,
             token: token.trim(),
           })
           prompts.log.success("Logged into " + args.url)
