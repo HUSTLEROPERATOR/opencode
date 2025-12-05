@@ -2,6 +2,7 @@ import z from "zod"
 import * as path from "path"
 import * as fs from "fs/promises"
 import { Log } from "../util/log"
+import { Metrics } from "../util/metrics"
 
 export namespace Patch {
   const log = Log.create({ service: "patch" })
@@ -516,6 +517,12 @@ export namespace Patch {
   // Main patch application function
   export async function applyPatch(patchText: string): Promise<AffectedPaths> {
     const { hunks } = parsePatch(patchText)
+
+    // Track patch metrics
+    const patchBytes = new TextEncoder().encode(patchText).length
+    const patchLines = patchText.split('\n').length
+    Metrics.patchSize(patchBytes, patchLines)
+
     return applyHunksToFiles(hunks)
   }
 

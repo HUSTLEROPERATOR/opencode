@@ -5,6 +5,7 @@ import z from "zod"
 import { Identifier } from "../id/id"
 import { MessageV2 } from "./message-v2"
 import { Log } from "../util/log"
+import { Metrics } from "../util/metrics"
 import { SessionRevert } from "./revert"
 import { Session } from "."
 import { Agent } from "../agent/agent"
@@ -146,6 +147,7 @@ export namespace SessionPrompt {
   })
   export type PromptInput = z.infer<typeof PromptInput>
   export async function prompt(input: PromptInput): Promise<MessageV2.WithParts> {
+    using _ = Metrics.timer("session.prompt.total")
     const l = log.clone().tag("session", input.sessionID)
     l.info("prompt")
 
@@ -363,6 +365,7 @@ export namespace SessionPrompt {
       })
       if (result.shouldRetry) {
         for (let retry = 1; retry < maxRetries; retry++) {
+          Metrics.retry("session.prompt", retry, maxRetries)
           const lastRetryPart = result.parts.findLast((p) => p.type === "retry")
 
           if (lastRetryPart) {
@@ -549,44 +552,52 @@ export namespace SessionPrompt {
               args,
             },
           )
-          const result = await item.execute(args, {
-            sessionID: input.sessionID,
-            abort: options.abortSignal!,
-            messageID: input.processor.message.id,
-            callID: options.toolCallId,
-            extra: {
-              modelID: input.modelID,
-              providerID: input.providerID,
-            },
-            agent: input.agent.name,
-            metadata: async (val) => {
-              const match = input.processor.partFromToolCall(options.toolCallId)
-              if (match && match.state.status === "running") {
-                await Session.updatePart({
-                  ...match,
-                  state: {
-                    title: val.title,
-                    metadata: val.metadata,
-                    status: "running",
-                    input: args,
-                    time: {
-                      start: Date.now(),
-                    },
-                  },
-                })
-              }
-            },
-          })
-          await Plugin.trigger(
-            "tool.execute.after",
-            {
-              tool: item.id,
+          const startTime = Date.now()
+          let success = false
+          try {
+            const result = await item.execute(args, {
               sessionID: input.sessionID,
+              abort: options.abortSignal!,
+              messageID: input.processor.message.id,
               callID: options.toolCallId,
-            },
-            result,
-          )
-          return result
+              extra: {
+                modelID: input.modelID,
+                providerID: input.providerID,
+              },
+              agent: input.agent.name,
+              metadata: async (val) => {
+                const match = input.processor.partFromToolCall(options.toolCallId)
+                if (match && match.state.status === "running") {
+                  await Session.updatePart({
+                    ...match,
+                    state: {
+                      title: val.title,
+                      metadata: val.metadata,
+                      status: "running",
+                      input: args,
+                      time: {
+                        start: Date.now(),
+                      },
+                    },
+                  })
+                }
+              },
+            })
+            success = true
+            await Plugin.trigger(
+              "tool.execute.after",
+              {
+                tool: item.id,
+                sessionID: input.sessionID,
+                callID: options.toolCallId,
+              },
+              result,
+            )
+            return result
+          } finally {
+            const duration = Date.now() - startTime
+            Metrics.toolCall(item.id, success, duration)
+          }
         },
         toModelOutput(result) {
           return {
