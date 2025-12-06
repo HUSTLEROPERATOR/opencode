@@ -359,6 +359,7 @@ export namespace SessionPrompt {
       let stream = doStream()
       const cfg = await Config.get()
       const maxRetries = cfg.experimental?.chatMaxRetries ?? MAX_RETRIES
+      using _processTimer = Metrics.timer("session.prompt.process")
       let result = await processor.process(stream, {
         count: 0,
         max: maxRetries,
@@ -667,6 +668,7 @@ export namespace SessionPrompt {
         created: Date.now(),
       },
     }
+    Metrics.counter("session.messages.user")
 
     const parts = await Promise.all(
       input.parts.map(async (part): Promise<MessageV2.Part[]> => {
@@ -993,6 +995,7 @@ export namespace SessionPrompt {
         },
         sessionID: input.sessionID,
       }
+      Metrics.counter("session.messages.assistant")
       await Session.updateMessage(msg)
       return msg
     }
@@ -1223,6 +1226,13 @@ export namespace SessionPrompt {
                 })
                 assistantMsg.cost += usage.cost
                 assistantMsg.tokens = usage.tokens
+
+                // Track token metrics
+                Metrics.tokens("input", usage.tokens.input)
+                Metrics.tokens("output", usage.tokens.output)
+                Metrics.tokens("reasoning", usage.tokens.reasoning)
+                Metrics.tokens("cache", usage.tokens.cache.read + usage.tokens.cache.write)
+                Metrics.counter("session.cost", usage.cost)
                 await Session.updatePart({
                   id: Identifier.ascending("part"),
                   reason: value.finishReason,
@@ -1237,6 +1247,8 @@ export namespace SessionPrompt {
                 if (snapshot) {
                   const patch = await Snapshot.patch(snapshot)
                   if (patch.files.length) {
+                    Metrics.counter("session.patches.total")
+                    Metrics.counter("session.patches.files", patch.files.length)
                     await Session.updatePart({
                       id: Identifier.ascending("part"),
                       messageID: assistantMsg.id,
@@ -1295,6 +1307,10 @@ export namespace SessionPrompt {
 
               case "finish":
                 assistantMsg.time.completed = Date.now()
+                if (assistantMsg.time.created) {
+                  const duration = assistantMsg.time.completed - assistantMsg.time.created
+                  Metrics.counter("session.messages.duration", duration)
+                }
                 await Session.updateMessage(assistantMsg)
                 break
 

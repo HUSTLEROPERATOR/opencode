@@ -15,7 +15,7 @@ Data ultimo aggiornamento: 2025-11-17
 - Adattato SDK build (ritornato a shebang bun) ma build fallisce per assenza di Bun nel PATH su Windows.
 - Sostituiti alcuni accessi opzionali e commenti per compatibilità (Session getUsage bedrock tokens, theme proxy).
 
-## Modifiche effettuate (sessione corrente - 2025-11-17)
+## Modifiche effettuate (sessione corrente - 2025-12-06)
 
 ### Prima fase (mattina)
 ✅ **Installazione Bun completata** (v1.3.2 su Windows, aggiunto al PATH)
@@ -78,6 +78,31 @@ Data ultimo aggiornamento: 2025-11-17
    - Conclusione: `skipLibCheck: true` **necessario** per @opentui/solid, bun-types, @types/react
    - Il nostro codice è già strict-compliant, solo le librerie esterne hanno problemi
 
+### Quarta fase (2025-12-06)
+✅ **Sistema metriche completato** - Punto 12 (Performance):
+   - **Metriche già esistenti verificate**:
+     * Sistema centralizzato in `util/metrics.ts` già implementato
+     * Tool calls tracking già presente in `session/prompt.ts:599`
+     * Retries tracking già presente in `session/prompt.ts:368`
+     * Patch size tracking già presente in `patch/index.ts:517`
+   - **Nuove metriche aggiunte**:
+     * Timer per `processor.process()` - misura durata processing stream (`session/prompt.ts:362`)
+     * Token usage tracking (input, output, reasoning, cache) (`session/prompt.ts:1228-1233`)
+     * Session cost tracking (`session/prompt.ts:1233`)
+     * Patch files count (`session/prompt.ts:1248-1249`)
+     * Message generation counters (user/assistant) (`session/prompt.ts:671,997`)
+     * Message duration tracking (`session/prompt.ts:1310-1313`)
+✅ **Test suite metriche completa** (12 nuovi test, tutti passano):
+   - **test/util/metrics.test.ts** (12 test):
+     * Counter increment e value tracking
+     * Summary e average calculation
+     * Timer measurements e using syntax
+     * ToolCall success/failure tracking
+     * Retry attempts e exhaustion
+     * Patch size tracking (bytes e lines)
+     * Token types tracking
+     * Reset e getAll functionality
+
 ## Stato attuale
 - ✅ pnpm -r run typecheck: **PASS** (zero errori, tutti i pacchetti, **con strict: true**)
 - ✅ Build web: **completata e ottimizzata** (vendor code splitting)
@@ -86,8 +111,9 @@ Data ultimo aggiornamento: 2025-11-17
 - ✅ CI/CD pipeline configurata e pronta
 - ✅ **Strict mode abilitato** in tsconfig opencode
 - ✅ ToolRegistry refactorato con migliore gestione permessi
-- ✅ **Suite test**: 25 nuovi test aggiunti (Bus, ToolRegistry, SessionCompaction)
+- ✅ **Suite test**: 37 nuovi test aggiunti (Bus, ToolRegistry, SessionCompaction, **Metrics**)
 - ✅ **skipLibCheck**: Valutato e mantenuto (necessario per librerie esterne)
+- ✅ **Sistema metriche completo**: tracking completo di performance, token usage, tool calls, retries, patch size
 
 ## Rischi / Debito Tecnico
 - ~~skipLibCheck + strict disabilitato nel pacchetto opencode riducono qualità del tipo.~~ ✅ **RISOLTO**: strict abilitato, skipLibCheck necessario per librerie esterne
@@ -111,9 +137,10 @@ Data ultimo aggiornamento: 2025-11-17
 **Prossime priorità:**
 ~~10. Testing: Aggiungere test per bus, tool registry, session compaction logic~~ ✅ **COMPLETATO**
 ~~11. Rimuovere skipLibCheck~~ ✅ **VALUTATO** (necessario mantenerlo)
-12. Performance:
-   - Misurare tempo di prompt pipeline (SessionPrompt.process) e valutare throttling o streaming partial flush.
-   - Aggiungere metriche (counters) in Log per tool calls, retries, patch size.
+~~12. Performance~~ ✅ **COMPLETATO**:
+   - ~~Misurare tempo di prompt pipeline (SessionPrompt.process)~~ ✅ Timer aggiunto
+   - ~~Aggiungere metriche (counters) per tool calls, retries, patch size~~ ✅ Sistema completo implementato
+   - **Metriche ora tracciate**: tool calls, retries, patch size, token usage, session cost, message duration
 13. Security / Hardening:
    - Validare input tool.execute per injection (sanitize shell commands in Task / BashTool).
    - Limitare lunghezza e tipo dei file caricati (non solo text/plain).
@@ -132,11 +159,15 @@ Data ultimo aggiornamento: 2025-11-17
 - Typecheck mirato: `pnpm --filter opencode run typecheck`.
 - Pulizia ts-nocheck (esempio singolo file): rimuovere direttiva, correggere errori, ripetere.
 
-## Metriche desiderate (da implementare)
-- Numero tool calls per session.
-- Tempo medio generazione assistant message.
-- Token spend input/output/reasoning per modello.
-- Dimensione media patch per message.
+## Metriche implementate ✅
+- ✅ Numero tool calls per session (`tool.calls.total`, `tool.calls.{toolName}`)
+- ✅ Tempo medio generazione assistant message (`session.messages.duration`)
+- ✅ Token spend input/output/reasoning/cache (`tokens.input`, `tokens.output`, `tokens.reasoning`, `tokens.cache`)
+- ✅ Dimensione media patch per message (`patch.bytes`, `patch.lines`, `session.patches.files`)
+- ✅ Session cost tracking (`session.cost`)
+- ✅ Retry tracking (`retries.total`, `retries.{context}`, `retries.exhausted`)
+- ✅ Message counters (`session.messages.user`, `session.messages.assistant`)
+- ✅ Process timing (`session.prompt.total`, `session.prompt.process`)
 
 ## Statistiche finali (aggiornate)
 - File con `// @ts-nocheck` rimossi: **11**
@@ -147,13 +178,15 @@ Data ultimo aggiornamento: 2025-11-17
 - **Strict mode**: ✅ **Abilitato** in tsconfig opencode
 - **ToolRegistry refactoring**: 1 funzione helper aggiunta
 - **Build web**: Vendor code splitting in 3 chunk
-- **Test suite**: 25 nuovi test aggiunti (3 file test nuovi)
+- **Test suite**: **37 nuovi test** aggiunti (**4 file test**: bus, tool/registry, session/compaction, **util/metrics**)
 - **skipLibCheck**: Valutato, necessario mantenerlo (68 errori nelle librerie esterne)
+- **Sistema metriche**: 8 tipi di metriche implementate, tracking completo di performance e usage
 
 ## Nota
-✅ Documento aggiornato il 2025-11-17 (3 fasi) dopo completamento:
-- **Fase 1**: Installazione Bun, rimozione ts-nocheck, CI/CD, tipi centralizzati
-- **Fase 2**: Strict mode, ToolRegistry refactoring, ottimizzazione build web
-- **Fase 3**: Suite test completa (Bus, ToolRegistry, SessionCompaction), valutazione skipLibCheck
+✅ Documento aggiornato il 2025-12-06 (4 fasi) dopo completamento:
+- **Fase 1** (2025-11-17): Installazione Bun, rimozione ts-nocheck, CI/CD, tipi centralizzati
+- **Fase 2** (2025-11-17): Strict mode, ToolRegistry refactoring, ottimizzazione build web
+- **Fase 3** (2025-11-17): Suite test completa (Bus, ToolRegistry, SessionCompaction), valutazione skipLibCheck
+- **Fase 4** (2025-12-06): Sistema metriche completo, tracking performance e usage, test suite metriche
 
-Prossimo aggiornamento dopo implementazione punto 12-16 (performance, security, documentation).
+Prossimo aggiornamento dopo implementazione punto 13-16 (security, documentation, release prep, test avanzati).

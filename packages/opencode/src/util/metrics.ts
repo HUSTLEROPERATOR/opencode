@@ -28,10 +28,24 @@ export namespace Metrics {
   })
 
   /**
+   * Try to get state, return undefined if no instance context available
+   */
+  function tryGetState() {
+    try {
+      return state()
+    } catch {
+      return undefined
+    }
+  }
+
+  /**
    * Increment a counter with an optional value (for tracking totals/averages)
    */
   export function counter(name: string, value: number = 1): void {
-    const { counters } = state()
+    const s = tryGetState()
+    if (!s) return
+
+    const { counters } = s
     const existing = counters.get(name)
 
     if (existing) {
@@ -61,12 +75,16 @@ export namespace Metrics {
    */
   export function timer(name: string): { stop: () => number; [Symbol.dispose]: () => number } {
     const start = Date.now()
-    const { timings } = state()
-    timings.set(name, start)
+    const s = tryGetState()
+    if (s) {
+      s.timings.set(name, start)
+    }
 
     const stop = () => {
       const duration = Date.now() - start
-      timings.delete(name)
+      if (s) {
+        s.timings.delete(name)
+      }
       counter(`${name}.duration`, duration)
       log.debug("timer", { name, duration })
       return duration
@@ -82,16 +100,18 @@ export namespace Metrics {
    * Get current value of a counter
    */
   export function get(name: string): CounterData | undefined {
-    const { counters } = state()
-    return counters.get(name)
+    const s = tryGetState()
+    if (!s) return undefined
+    return s.counters.get(name)
   }
 
   /**
    * Get all counters
    */
   export function getAll(): Record<string, CounterData> {
-    const { counters } = state()
-    return Object.fromEntries(counters.entries())
+    const s = tryGetState()
+    if (!s) return {}
+    return Object.fromEntries(s.counters.entries())
   }
 
   /**
@@ -120,8 +140,9 @@ export namespace Metrics {
    * Reset a specific counter
    */
   export function reset(name: string): void {
-    const { counters } = state()
-    counters.delete(name)
+    const s = tryGetState()
+    if (!s) return
+    s.counters.delete(name)
     log.debug("reset counter", { name })
   }
 
@@ -129,9 +150,10 @@ export namespace Metrics {
    * Reset all counters
    */
   export function resetAll(): void {
-    const { counters, timings } = state()
-    counters.clear()
-    timings.clear()
+    const s = tryGetState()
+    if (!s) return
+    s.counters.clear()
+    s.timings.clear()
     log.debug("reset all metrics")
   }
 
