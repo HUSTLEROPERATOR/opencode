@@ -10,7 +10,10 @@
       "Bash(bun test:*)",
       "Bash(export OPENCODE_DISABLE_DEFAULT_PLUGINS=1)",
       "Bash(git commit:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git push:*)",
+      "Bash(bun install:*)",
+      "Bash(pnpm install:*)"
     ],
     "deny": [],
     "ask": []
